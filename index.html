@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insurance AI Operating Maturity Index</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --panel-alt: #eef3fb;
+        --ink: #102235;
+        --muted: #4d6478;
+        --line: #dfe7f1;
+        --primary: #0f5ea8;
+        --primary-soft: rgba(15, 94, 168, 0.12);
+        --accent: #1d8f70;
+        --warning: #b65d14;
+        --danger: #9f2d2d;
+        --shadow: 0 10px 28px rgba(14, 33, 60, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 18px 64px;
+      }
+
+      .topbar {
+        background: linear-gradient(135deg, #0e3870 0%, #1d5ea8 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 28px 26px;
+        box-shadow: var(--shadow);
+      }
+
+      .topbar h1 {
+        margin: 0 0 10px;
+        font-size: clamp(1.85rem, 3vw, 2.6rem);
+      }
+
+      .topbar p {
+        margin: 0;
+        color: rgba(255,255,255,0.9);
+        line-height: 1.5;
+        max-width: 880px;
+      }
+
+      .status-strip {
+        margin: 18px 0 14px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 12px;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .status-strip strong {
+        color: var(--ink);
+      }
+
+      form {
+        margin-top: 20px;
+      }
+
+      .dimension-section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        margin-top: 20px;
+        padding: 18px 18px 8px;
+      }
+
+      .dimension-title {
+        margin: 0 0 6px;
+        font-size: clamp(1.2rem, 2vw, 1.6rem);
+      }
+
+      .dimension-subtitle {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .question-block {
+        background: var(--panel-alt);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px 16px 12px;
+        margin-bottom: 16px;
+      }
+
+      .question-block.invalid {
+        border-color: rgba(159, 45, 45, 0.9);
+        box-shadow: 0 0 0 1px rgba(159, 45, 45, 0.2);
+      }
+
+      .question-label {
+        margin: 0 0 10px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+
+      .option-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .option-item {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .option-item input {
+        margin-top: 2px;
+        accent-color: var(--primary);
+      }
+
+      .option-value {
+        display: inline-flex;
+        min-width: 1.4rem;
+        justify-content: center;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .option-text {
+        line-height: 1.45;
+      }
+
+      .submit-toolbar {
+        margin-top: 24px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .primary-btn {
+        border: none;
+        background: linear-gradient(135deg, var(--primary) 0%, #256eb7 100%);
+        color: white;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 14px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+      }
+
+      .primary-btn:hover { filter: brightness(1.03); }
+
+      .error-banner {
+        display: none;
+        margin-top: 12px;
+        background: rgba(159, 45, 45, 0.08);
+        color: var(--danger);
+        border: 1px solid rgba(159, 45, 45, 0.45);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+
+      .error-banner.visible {
+        display: block;
+      }
+
+      .results-panel {
+        display: none;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        margin-top: 24px;
+        padding: 22px 18px;
+      }
+
+      .results-panel.visible {
+        display: block;
+      }
+
+      .panel-title {
+        margin: 0 0 12px;
+        font-size: clamp(1.35rem, 2vw, 2rem);
+      }
+
+      .results-grid {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.2fr) minmax(240px, 0.8fr);
+        gap: 18px;
+      }
+
+      .chart-card, .summary-card {
+        background: var(--panel-alt);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .chart-wrap {
+        position: relative;
+        height: 400px;
+      }
+
+      .summary-card h3, .chart-card h3 {
+        margin: 0 0 12px;
+        font-size: 1.1rem;
+      }
+
+      .score-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .score-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        background: rgba(255,255,255,0.7);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+
+      .score-label {
+        color: var(--ink);
+      }
+
+      .score-value {
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .low-dimensions {
+        margin-top: 15px;
+      }
+
+      .profile-box {
+        background: rgba(15, 94, 168, 0.05);
+        border: 1px solid rgba(15, 94, 168, 0.25);
+        border-radius: 12px;
+        padding: 14px;
+        margin-top: 10px;
+      }
+
+      .profile-box strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .meta-label {
+        display: inline-block;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      @media (max-width: 760px) {
+        .results-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .chart-wrap {
+          height: 300px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <h1>Insurance AI Operating Maturity Index</h1>
+        <p>
+          A P&amp;C insurance maturity diagnostic focused on operating capability across data, channels,
+          automation, AI, and delivery capacity.
+        </p>
+      </header>
+
+      <div class="status-strip">
+        <strong>Assessment status:</strong> Complete all 20 questions to submit. Results remain hidden until a valid submission.
+      </div>
+
+      <form id="assessmentForm" novalidate>
+        <div id="questionContainer"></div>
+
+        <div class="submit-toolbar">
+          <button type="submit" class="primary-btn">Submit Assessment</button>
+        </div>
+        <div id="validationMessage" class="error-banner" role="alert" aria-live="assertive"></div>
+      </form>
+
+      <section id="resultsPanel" class="results-panel" aria-live="polite">
+        <h2 class="panel-title">Results</h2>
+        <div class="results-grid">
+          <div class="chart-card">
+            <h3>Radar Chart</h3>
+            <div class="chart-wrap">
+              <canvas id="maturityRadar"></canvas>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <h3>Dimension Scores</h3>
+            <ul id="scoreList" class="score-list"></ul>
+
+            <div class="low-dimensions">
+              <div class="meta-label">Two lowest dimensions:</div>
+              <div id="lowestDimensionsText"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-box">
+          <div class="meta-label">Matched maturity profile</div>
+          <strong id="profileName"></strong>
+          <div id="profileDiagnosis"></div>
+        </div>
+
+        <div class="profile-box">
+          <div class="meta-label">Recommended next action</div>
+          <div id="profileAction"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const DIMENSION_NAMES = [
+        'Insurance Data Fabric',
+        'Policyholder & Distribution Channels',
+        'Claims & Underwriting Automation',
+        'Underwriting & Claims AI',
+        'Operating Change Capacity'
+      ];
+
+      const DIMENSION_PRIORITY = [
+        'Insurance Data Fabric',
+        'Policyholder & Distribution Channels',
+        'Underwriting & Claims AI',
+        'Claims & Underwriting Automation',
+        'Operating Change Capacity'
+      ];
+
+      const QUESTIONS = [
+        {
+          id: 1,
+          dimension: 'Insurance Data Fabric',
+          question: 'For a single policyholder or claim, how are policy, claims, billing, and CRM records linked?',
+          options: [
+            { value: 1, text: 'Separate systems with no consistent cross-system identifier; staff match records manually.' },
+            { value: 2, text: 'Periodic batch matching exists, but identifiers are inconsistent and reconciliation is frequent.' },
+            { value: 3, text: 'Core policy and claims records are joined on a common governed identifier; other sources are joined only for specific projects.' },
+            { value: 4, text: 'Policy, claims, billing, and approved third-party data are linked on a common identifier with daily-or-better refresh.' },
+            { value: 5, text: 'A single resolved policyholder/claim identity spans core and approved third-party sources with near-real-time refresh and monitored data-quality thresholds.' }
+          ]
+        },
+        {
+          id: 2,
+          dimension: 'Insurance Data Fabric',
+          question: 'What is the refresh cadence of integrated operational data used by claims and underwriting?',
+          options: [
+            { value: 1, text: 'There is no integrated operational dataset; users pull data manually when needed.' },
+            { value: 2, text: 'Integrated data is refreshed through weekly or monthly batch extracts.' },
+            { value: 3, text: 'Core policy and claims data refresh on a scheduled daily cycle.' },
+            { value: 4, text: 'Core plus approved third-party data refresh daily or more frequently for operational use.' },
+            { value: 5, text: 'Core and approved third-party data refresh near real time, with freshness thresholds monitored and exceptions alerted.' }
+          ]
+        },
+        {
+          id: 3,
+          dimension: 'Insurance Data Fabric',
+          question: 'How are unstructured claim documents such as FNOL forms, repair estimates, and adjuster notes made usable?',
+          options: [
+            { value: 1, text: 'They are stored as files and found mainly by folder, policy number, or claim number; content is not searchable.' },
+            { value: 2, text: 'Basic document metadata/indexing exists, but document content is not systematically extracted or searchable.' },
+            { value: 3, text: 'Selected document types are full-text searchable, but extracted content is not routinely used by workflows.' },
+            { value: 4, text: 'Priority document types are automatically extracted into structured fields that claims or underwriting workflows consume.' },
+            { value: 5, text: 'Documents across priority types are extracted and queryable inside operational workflows, with extraction/data-quality thresholds monitored.' }
+          ]
+        },
+        {
+          id: 4,
+          dimension: 'Insurance Data Fabric',
+          question: 'How is recurring cross-system management reporting produced?',
+          options: [
+            { value: 1, text: 'Analysts rebuild reports from exports and spreadsheets each reporting cycle.' },
+            { value: 2, text: 'A reporting database exists, but staff frequently reconcile identifiers and fix joins manually.' },
+            { value: 3, text: 'Recurring policy-and-claims reporting is automated; billing, CRM, or third-party data are still manually joined for many analyses.' },
+            { value: 4, text: 'Most recurring reports draw from governed integrated sources; manual work is limited mainly to exceptions.' },
+            { value: 5, text: 'Operational metrics come from resolved, near-real-time integrated data with automated quality/freshness alerts.' }
+          ]
+        },
+        {
+          id: 5,
+          dimension: 'Policyholder & Distribution Channels',
+          question: 'What share of first notices of loss (FNOL) are initiated through a digital channel such as web, app, or digital chat?',
+          options: [
+            { value: 1, text: 'Less than 10%.' },
+            { value: 2, text: '10% to under 25%.' },
+            { value: 3, text: '25% to under 50%.' },
+            { value: 4, text: '50% to 75%.' },
+            { value: 5, text: 'More than 75%, and digital share is tracked by journey.' }
+          ]
+        },
+        {
+          id: 6,
+          dimension: 'Policyholder & Distribution Channels',
+          question: 'What share of digital FNOL, service, or broker submissions enter the core claims/underwriting workflow without staff re-keying the submitted data?',
+          options: [
+            { value: 1, text: 'Less than 10%.' },
+            { value: 2, text: '10% to under 25%.' },
+            { value: 3, text: '25% to under 50%.' },
+            { value: 4, text: '50% to 75%.' },
+            { value: 5, text: 'More than 75%, with re-keying limited to documented exceptions.' }
+          ]
+        },
+        {
+          id: 7,
+          dimension: 'Policyholder & Distribution Channels',
+          question: 'Across priority journeys such as FNOL, policy service, payments, and broker submissions, what level of status visibility is available to the policyholder or agent?',
+          options: [
+            { value: 1, text: 'No self-service status; the customer or agent must contact staff for updates.' },
+            { value: 2, text: 'Status is available for only one or two journeys or is limited to static confirmation messages.' },
+            { value: 3, text: 'Basic online status is available for several high-volume journeys, but updates are incomplete or delayed.' },
+            { value: 4, text: 'Live or frequently refreshed status is available for most priority journeys.' },
+            { value: 5, text: 'Live status is available for nearly all priority journeys, and digital usage/status performance is tracked by journey.' }
+          ]
+        },
+        {
+          id: 8,
+          dimension: 'Policyholder & Distribution Channels',
+          question: 'How many priority policyholder and broker journeys can be completed end to end digitally?',
+          options: [
+            { value: 1, text: 'None; priority journeys depend on phone, email, paper, or staff completion.' },
+            { value: 2, text: 'One or two journeys are digital, but staff still re-key or manually complete most downstream work.' },
+            { value: 3, text: 'Several high-volume journeys are digital with partial integration into core systems.' },
+            { value: 4, text: 'Most priority journeys are digital and flow into core workflows; re-keying is limited to exceptions.' },
+            { value: 5, text: 'Nearly all priority journeys are digital end to end, flow into core workflows without re-keying, and are measured by journey.' }
+          ]
+        },
+        {
+          id: 9,
+          dimension: 'Claims & Underwriting Automation',
+          question: 'What share of eligible low-complexity claims close with zero manual touches?',
+          options: [
+            { value: 1, text: '0%.' },
+            { value: 2, text: 'More than 0% but under 5%.' },
+            { value: 3, text: '5% to under 20%.' },
+            { value: 4, text: '20% to 50%.' },
+            { value: 5, text: 'More than 50%, measured at least monthly.' }
+          ]
+        },
+        {
+          id: 10,
+          dimension: 'Claims & Underwriting Automation',
+          question: 'What share of eligible low-complexity endorsements or renewals complete straight through without manual intervention?',
+          options: [
+            { value: 1, text: '0%.' },
+            { value: 2, text: 'More than 0% but under 5%.' },
+            { value: 3, text: '5% to under 20%.' },
+            { value: 4, text: '20% to 50%.' },
+            { value: 5, text: 'More than 50%, measured at least monthly.' }
+          ]
+        },
+        {
+          id: 11,
+          dimension: 'Claims & Underwriting Automation',
+          question: 'How are exceptions routed when an automated claims or underwriting workflow cannot complete normally?',
+          options: [
+            { value: 1, text: 'Staff identify and route exceptions manually through email or work queues.' },
+            { value: 2, text: 'Business rules automate isolated tasks, but handoffs and exception routing are largely manual.' },
+            { value: 3, text: 'Workflow automation routes exceptions for selected processes, but some handoffs still require manual intervention.' },
+            { value: 4, text: 'Exceptions route automatically by rule and automated steps leave a standard audit trail.' },
+            { value: 5, text: 'Exceptions auto-route under governed rules, and those rules are reviewed and tuned on a defined cycle using closed-claim or underwriting outcomes.' }
+          ]
+        },
+        {
+          id: 12,
+          dimension: 'Claims & Underwriting Automation',
+          question: 'How is straight-through processing (STP) performance managed?',
+          options: [
+            { value: 1, text: 'No STP process or STP metric exists.' },
+            { value: 2, text: 'Some tasks are automated, but there is no end-to-end STP measure.' },
+            { value: 3, text: 'STP exists for selected workflows, but the rate is not measured consistently.' },
+            { value: 4, text: 'STP rate is reported at least monthly with defined owners and targets for eligible work.' },
+            { value: 5, text: 'STP rate is an operating KPI with targets; exception rules and eligibility criteria are tuned from measured outcomes on a defined cycle.' }
+          ]
+        },
+        {
+          id: 13,
+          dimension: 'Underwriting & Claims AI',
+          question: 'How broadly are AI/ML models used in production underwriting and claims work?',
+          options: [
+            { value: 1, text: 'No production models outside traditional actuarial pricing; triage, fraud referral, and underwriting selection rely on expert judgment/static rules.' },
+            { value: 2, text: 'AI pilots or isolated vendor/team models exist, but production use is narrow.' },
+            { value: 3, text: 'Selected production models support one or two use cases such as triage, fraud detection, or underwriting.' },
+            { value: 4, text: 'Models operate at several underwriting and claims decision points in normal production workflows.' },
+            { value: 5, text: 'Models are in production across underwriting, triage, fraud, and reserving, with defined controls for each use case.' }
+          ]
+        },
+        {
+          id: 14,
+          dimension: 'Underwriting & Claims AI',
+          question: 'What model inventory and validation process covers AI/ML used in underwriting and claims?',
+          options: [
+            { value: 1, text: 'No formal inventory or validation process exists for AI/ML models.' },
+            { value: 2, text: 'Pilot teams keep their own documentation; governance is informal and inconsistent.' },
+            { value: 3, text: 'Some production models are inventoried and validated, but coverage is incomplete.' },
+            { value: 4, text: 'All production models are in a formal inventory and follow a defined validation process before or during use.' },
+            { value: 5, text: 'The inventory covers internal and third-party models, with validation plus scheduled drift, performance, and unfair-discrimination review against defined thresholds.' }
+          ]
+        },
+        {
+          id: 15,
+          dimension: 'Underwriting & Claims AI',
+          question: 'Where do model outputs appear, and who owns the consequential decision?',
+          options: [
+            { value: 1, text: 'No AI/ML output is used in underwriting or claims workflow.' },
+            { value: 2, text: 'Pilot outputs are reviewed separately from the production working screen.' },
+            { value: 3, text: 'Model scores or reports are available beside the workflow, but users must switch context to act on them.' },
+            { value: 4, text: 'Recommendations appear inside the adjuster/underwriter workflow, and a named human reviewer owns each model-influenced decision type.' },
+            { value: 5, text: 'Recommendations are embedded across the workflow; consequential decisions require defined human sign-off, low-risk automation is explicitly bounded, and rationale/audit evidence is retained.' }
+          ]
+        },
+        {
+          id: 16,
+          dimension: 'Underwriting & Claims AI',
+          question: 'How are production AI/ML models monitored after deployment?',
+          options: [
+            { value: 1, text: 'No production monitoring process exists.' },
+            { value: 2, text: 'Pilot accuracy is checked before launch or ad hoc when problems are reported.' },
+            { value: 3, text: 'Performance is reviewed periodically for some production models.' },
+            { value: 4, text: 'All production models have scheduled performance monitoring and documented review ownership.' },
+            { value: 5, text: 'Performance, drift, and unfair-discrimination indicators are monitored against defined thresholds, with escalation/revalidation triggered when thresholds are breached.' }
+          ]
+        },
+        {
+          id: 17,
+          dimension: 'Operating Change Capacity',
+          question: 'What is the typical internal cycle time from an approved business decision to a deployed, filing-ready change where regulatory filing applies?',
+          options: [
+            { value: 1, text: 'More than 12 months.' },
+            { value: 2, text: '6 to 12 months.' },
+            { value: 3, text: '3 to under 6 months.' },
+            { value: 4, text: '1 to under 3 months.' },
+            { value: 5, text: 'Under 1 month / measured in weeks.' }
+          ]
+        },
+        {
+          id: 18,
+          dimension: 'Operating Change Capacity',
+          question: 'How is responsibility for delivering priority business and technology changes organized?',
+          options: [
+            { value: 1, text: 'No standing delivery/change function; work is assembled case by case.' },
+            { value: 2, text: 'Temporary project teams are formed for major initiatives and dissolve after go-live.' },
+            { value: 3, text: 'Cross-functional teams deliver selected priority initiatives, but staffing and ownership are not continuous.' },
+            { value: 4, text: 'A standing delivery capability with stable cross-functional ownership ships priority changes frequently.' },
+            { value: 5, text: 'A standing cross-functional team operates continuously with a managed backlog, stable ownership, and measured delivery cadence.' }
+          ]
+        },
+        {
+          id: 19,
+          dimension: 'Operating Change Capacity',
+          question: 'How consistently are adoption and business outcomes measured after a release?',
+          options: [
+            { value: 1, text: 'Adoption and outcomes are not tracked after release.' },
+            { value: 2, text: 'Success is checked mainly at go-live, with little follow-up measurement.' },
+            { value: 3, text: 'Adoption or outcome metrics are tracked for selected major releases.' },
+            { value: 4, text: 'Adoption and outcome metrics are tracked routinely for most priority releases.' },
+            { value: 5, text: 'Adoption and business outcomes are tracked for every priority release and feed the next prioritization cycle.' }
+          ]
+        },
+        {
+          id: 20,
+          dimension: 'Operating Change Capacity',
+          question: 'What share of approved priority changes have a named business owner, a deployment target, and a post-release outcome metric before work begins?',
+          options: [
+            { value: 1, text: 'Less than 10%.' },
+            { value: 2, text: '10% to under 30%.' },
+            { value: 3, text: '30% to under 60%.' },
+            { value: 4, text: '60% to 90%.' },
+            { value: 5, text: 'More than 90%, and measured outcomes are used to reprioritize the backlog.' }
+          ]
+        }
+      ];
+
+      const PROFILE_LIBRARY = {
+        'Paper-Bound Carrier': {
+          diagnosis: 'Paper-Bound Carrier — The insurer has no scalable digital foundation on any dimension. AI or channel investments made now would sit on fragmented processes and data and would not scale.',
+          action: 'Unify policy and claims data on a common identifier before expanding AI or channel investment.'
+        },
+        'Foundation Gap': {
+          diagnosis: 'Foundation Gap — Channels, automation and AI are advancing on fragmented data. Model outputs and automated decisions cannot be trusted or scaled because they lack joined policy, claims and document context.',
+          action: 'Pause new AI pilots and redirect that budget to the policy/claims data join.'
+        },
+        'Execution Gap': {
+          diagnosis: 'Execution Gap — The insurer has built capability it cannot deploy at business speed. Execution, not technology, is the binding constraint, so further technology spend will queue behind slow change cycles.',
+          action: 'Stand up a permanent cross-functional delivery team accountable for decision-to-deployed cycle time as an executive metric.'
+        },
+        'Digitalized but Not Transforming': {
+          diagnosis: 'Digitalized but Not Transforming — A modern front door feeds a largely manual decision engine. Rising digital volume can increase adjuster workload rather than lower claims-handling cost.',
+          action: 'Route digital FNOL into a governed triage model so channel data drives decisions, not just intake.'
+        },
+        'AI-Native Operator': {
+          diagnosis: 'AI-Native Operator — Capability is broad and no single dimension binds. The next advantage comes from compounding feedback between outcomes and models, not from adding disconnected tools.',
+          action: 'Feed closed-claim outcomes back into underwriting and triage models on a scheduled retraining cycle.'
+        },
+        'Weakest Link': {
+          diagnosis: 'Weakest Link — No trigger is met: the insurer is mid-stage, uneven without a single dominant gap, or strong with no weakness deep enough to bind. In each case, progress comes from lifting the weakest link in the operating chain rather than spreading investment evenly.',
+          action: 'Apply the stock action for the higher-priority of the two lowest dimensions.'
+        }
+      };
+
+      const STOCK_ACTIONS = {
+        'Insurance Data Fabric': 'Resolve policy and claims records to a single identifier and index priority claim documents.',
+        'Policyholder & Distribution Channels': 'Digitize the highest-volume intake journey end to end with live status and no re-keying.',
+        'Underwriting & Claims AI': 'Put one triage or fraud model into production inside the workflow with inventory, validation and named human sign-off.',
+        'Claims & Underwriting Automation': 'Take one high-volume, low-complexity transaction straight through and publish its STP rate monthly.',
+        'Operating Change Capacity': 'Assign a standing cross-functional team to one priority change and report its decision-to-deployed cycle time.'
+      };
+
+      function meanOf(arr) {
+        return arr.reduce((total, value) => total + value, 0) / arr.length;
+      }
+
+      function calculateScores(form) {
+        const scores = {};
+        DIMENSION_NAMES.forEach((dimension) => {
+          const matchingQuestions = QUESTIONS.filter((q) => q.dimension === dimension);
+          const values = matchingQuestions.map((q) => {
+            const checked = form.querySelector(`input[name="q${q.id}"]:checked`);
+            if (!checked) return null;
+            return Number(checked.value);
+          });
+          if (values.includes(null)) {
+            throw new Error('Incomplete submission');
+          }
+          scores[dimension] = meanOf(values);
+        });
+        return scores;
+      }
+
+      function identifyLowestTwo(scores) {
+        const dims = DIMENSION_NAMES.slice();
+        dims.sort((a, b) => {
+          if (scores[a] !== scores[b]) {
+            return scores[a] - scores[b];
+          }
+          return DIMENSION_PRIORITY.indexOf(a) - DIMENSION_PRIORITY.indexOf(b);
+        });
+        return dims.slice(0, 2);
+      }
+
+      function meanWithout(scores, dimension) {
+        const otherDimensions = DIMENSION_NAMES.filter((d) => d !== dimension);
+        return meanOf(otherDimensions.map((d) => scores[d]));
+      }
+
+      function bindingGapRule(scores, dimension, secondLowestDimension) {
+        const lowestTwo = identifyLowestTwo(scores);
+        const selectedLowest = lowestTwo[0];
+        const selectedSecond = lowestTwo[1];
+        if (dimension !== selectedLowest) {
+          return false;
+        }
+        const lowestScore = scores[dimension];
+        const gapToOthers = lowestScore <= meanWithout(scores, dimension) - 0.75;
+        const gapToSecond = lowestScore <= scores[secondLowestDimension] - 0.50;
+        return lowestScore <= 3.0 && gapToOthers && gapToSecond;
+      }
+
+      function renderQuestions() {
+        const container = document.getElementById('questionContainer');
+        container.innerHTML = '';
+
+        DIMENSION_NAMES.forEach((dimension) => {
+          const section = document.createElement('section');
+          section.className = 'dimension-section';
+          section.setAttribute('data-dimension', dimension);
+
+          const header = document.createElement('h2');
+          header.className = 'dimension-title';
+          header.textContent = dimension;
+
+          const subtitle = document.createElement('p');
+          subtitle.className = 'dimension-subtitle';
+          subtitle.textContent = 'Four questions';
+
+          section.appendChild(header);
+          section.appendChild(subtitle);
+
+          const dimensionQuestions = QUESTIONS.filter((q) => q.dimension === dimension);
+          dimensionQuestions.forEach((question) => {
+            const block = document.createElement('div');
+            block.className = 'question-block';
+            block.dataset.questionId = String(question.id);
+
+            const label = document.createElement('p');
+            label.className = 'question-label';
+            label.textContent = `${question.id}. ${question.question}`;
+
+            const list = document.createElement('div');
+            list.className = 'option-list';
+
+            question.options.forEach((option) => {
+              const optionWrap = document.createElement('label');
+              optionWrap.className = 'option-item';
+
+              const input = document.createElement('input');
+              input.type = 'radio';
+              input.name = `q${question.id}`;
+              input.value = String(option.value);
+
+              const valueChip = document.createElement('span');
+              valueChip.className = 'option-value';
+              valueChip.textContent = String(option.value);
+
+              const text = document.createElement('span');
+              text.className = 'option-text';
+              text.textContent = option.text;
+
+              optionWrap.appendChild(input);
+              optionWrap.appendChild(valueChip);
+              optionWrap.appendChild(text);
+              list.appendChild(optionWrap);
+            });
+
+            block.appendChild(label);
+            block.appendChild(list);
+            section.appendChild(block);
+          });
+
+          container.appendChild(section);
+        });
+      }
+
+      function validateResponses(form) {
+        const unanswered = [];
+        QUESTIONS.forEach((question) => {
+          const input = form.querySelector(`input[name="q${question.id}"]:checked`);
+          if (!input) {
+            unanswered.push(question.id);
+          }
+        });
+
+        const allBlocks = document.querySelectorAll('.question-block');
+        allBlocks.forEach((block) => {
+          block.classList.remove('invalid');
+        });
+
+        if (unanswered.length > 0) {
+          const firstId = unanswered[0];
+          const block = document.querySelector(`.question-block[data-question-id="${firstId}"]`);
+          if (block) {
+            block.classList.add('invalid');
+            block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+
+          const message = document.getElementById('validationMessage');
+          message.textContent = `Please answer all 20 questions before submitting. Unanswered questions remain: ${unanswered.join(', ')}.`;
+          message.classList.add('visible');
+          return false;
+        }
+
+        const message = document.getElementById('validationMessage');
+        message.classList.remove('visible');
+        message.textContent = '';
+        return true;
+      }
+
+      function profileMatch(scores) {
+        const lowestTwo = identifyLowestTwo(scores);
+        const secondLowest = lowestTwo[1];
+
+        if (DIMENSION_NAMES.every((dimension) => scores[dimension] <= 2.5)) {
+          return { name: 'Paper-Bound Carrier', trait: 'Paper-Bound Carrier' };
+        }
+
+        if (bindingGapRule(scores, 'Insurance Data Fabric', secondLowest)) {
+          return { name: 'Foundation Gap', trait: 'Foundation Gap' };
+        }
+
+        if (bindingGapRule(scores, 'Operating Change Capacity', secondLowest)) {
+          return { name: 'Execution Gap', trait: 'Execution Gap' };
+        }
+
+        if (scores['Policyholder & Distribution Channels'] >= 3.5 && scores['Underwriting & Claims AI'] <= 2.5 && lowestTwo.includes('Underwriting & Claims AI')) {
+          return { name: 'Digitalized but Not Transforming', trait: 'Digitalized but Not Transforming' };
+        }
+
+        if (DIMENSION_NAMES.every((dimension) => scores[dimension] >= 4.0)) {
+          return { name: 'AI-Native Operator', trait: 'AI-Native Operator' };
+        }
+
+        return { name: 'Developing Middle', trait: 'Developing Middle' };
+      }
+
+      function highestPriorityFromLowestTwo(lowestTwo) {
+        return lowestTwo.slice().sort((a, b) => {
+          return DIMENSION_PRIORITY.indexOf(a) - DIMENSION_PRIORITY.indexOf(b);
+        })[0];
+      }
+
+      function getProfileDetail(profileName, scores, lowestTwo) {
+        // If fallback ('Developing Middle') use framework-visible label 'Weakest Link — [dimension]'
+        const priorityFallbackDimension = highestPriorityFromLowestTwo(lowestTwo);
+        if (profileName === 'Developing Middle') {
+          const details = PROFILE_LIBRARY['Weakest Link'];
+          return {
+            diagnosis: details.diagnosis,
+            action: STOCK_ACTIONS[priorityFallbackDimension],
+            displayName: `Weakest Link — ${lowestTwo[0]}`
+          };
+        }
+
+        const details = PROFILE_LIBRARY[profileName];
+        return {
+          diagnosis: details.diagnosis,
+          action: details.action,
+          displayName: profileName
+        };
+      }
+
+      function renderResults(scores) {
+        const resultsPanel = document.getElementById('resultsPanel');
+        resultsPanel.classList.add('visible');
+        resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const radarData = {
+          labels: DIMENSION_NAMES,
+          datasets: [{
+            label: 'Maturity Score',
+            data: DIMENSION_NAMES.map((dimension) => scores[dimension]),
+            backgroundColor: 'rgba(15, 94, 168, 0.20)',
+            borderColor: '#0f5ea8',
+            pointBackgroundColor: '#0f5ea8',
+            pointBorderColor: '#ffffff',
+            pointHoverBackgroundColor: '#0f5ea8',
+            pointRadius: 4
+          }]
+        };
+
+        const chartCtx = document.getElementById('maturityRadar');
+        if (window.maturityChart) {
+          window.maturityChart.destroy();
+        }
+
+        window.maturityChart = new Chart(chartCtx, {
+          type: 'radar',
+          data: radarData,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                min: 1,
+                max: 5,
+                ticks: {
+                  stepSize: 1,
+                  backdropColor: 'rgba(0,0,0,0)'
+                },
+                pointLabels: {
+                  font: {
+                    size: 11
+                  },
+                  color: '#102235'
+                },
+                grid: {
+                  color: 'rgba(16, 34, 53, 0.18)'
+                },
+                angleLines: {
+                  color: 'rgba(16, 34, 53, 0.18)'
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+
+        const scoreList = document.getElementById('scoreList');
+        scoreList.innerHTML = '';
+        DIMENSION_NAMES.forEach((dimension) => {
+          const li = document.createElement('li');
+          li.className = 'score-item';
+          li.innerHTML = `<span class="score-label">${dimension}</span><span class="score-value">${scores[dimension].toFixed(2)}</span>`;
+          scoreList.appendChild(li);
+        });
+
+        const lowestTwo = identifyLowestTwo(scores);
+        const lowestText = document.getElementById('lowestDimensionsText');
+        lowestText.textContent = `${lowestTwo[0]} and ${lowestTwo[1]}`;
+
+        const profile = profileMatch(scores);
+        const profileDetails = getProfileDetail(profile.name, scores, lowestTwo);
+
+        document.getElementById('profileName').textContent = profileDetails.displayName || profile.name;
+        document.getElementById('profileDiagnosis').textContent = profileDetails.diagnosis;
+        document.getElementById('profileAction').textContent = profileDetails.action;
+      }
+
+      function onSubmit(event) {
+        event.preventDefault();
+        const form = document.getElementById('assessmentForm');
+        if (!validateResponses(form)) {
+          return;
+        }
+
+        try {
+          const scores = calculateScores(form);
+          renderResults(scores);
+        } catch (error) {
+          const message = document.getElementById('validationMessage');
+          message.textContent = 'Please answer all 20 questions before submitting.';
+          message.classList.add('visible');
+        }
+      }
+
+      document.getElementById('assessmentForm').addEventListener('submit', onSubmit);
+      renderQuestions();
+    </script>
+  </body>
+</html>
