@@ -7,18 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       :root {
-        --bg: #f5f7fb;
+        --bg: #f5f7f9;
         --panel: #ffffff;
-        --panel-alt: #eef3fb;
-        --ink: #102235;
-        --muted: #4d6478;
-        --line: #dfe7f1;
-        --primary: #0f5ea8;
-        --primary-soft: rgba(15, 94, 168, 0.12);
-        --accent: #1d8f70;
-        --warning: #b65d14;
-        --danger: #9f2d2d;
-        --shadow: 0 10px 28px rgba(14, 33, 60, 0.08);
+        --panel-alt: #f2f6f8;
+        --ink: #07183a;
+        --muted: #5b6b78;
+        --line: #e6edf2;
+        --primary: #1d8f70; /* dark green primary accent */
+        --primary-soft: rgba(29, 143, 112, 0.12);
+        --accent: #0f5ea8; /* secondary blue */
+        --warning: #c77b33;
+        --danger: #a83b3b;
+        --shadow: 0 8px 20px rgba(7, 24, 58, 0.06);
       }
 
       * { box-sizing: border-box; }
@@ -39,24 +39,40 @@
       }
 
       .topbar {
-        background: linear-gradient(135deg, #0e3870 0%, #1d5ea8 100%);
-        color: white;
-        border-radius: 16px;
+        background: transparent;
+        color: var(--ink);
+        border-radius: 14px;
         padding: 28px 26px;
-        box-shadow: var(--shadow);
+        box-shadow: none;
       }
 
       .topbar h1 {
-        margin: 0 0 10px;
-        font-size: clamp(1.85rem, 3vw, 2.6rem);
+        margin: 0 0 6px;
+        font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+        color: var(--ink);
+        letter-spacing: -0.5px;
       }
 
       .topbar p {
-        margin: 0;
-        color: rgba(255,255,255,0.9);
-        line-height: 1.5;
+        margin: 0 0 12px;
+        color: var(--muted);
+        line-height: 1.45;
         max-width: 880px;
       }
+
+      .hero-row { display: flex; gap: 18px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+      .hero-badges { display: flex; gap: 10px; align-items: center; }
+
+      .badge { background: var(--panel); border: 1px solid var(--line); padding: 8px 12px; border-radius: 999px; font-weight:700; color:var(--muted); font-size:0.9rem }
+
+      .progress-inline { min-width: 220px; }
+
+      .progress-text { font-weight:700; color:var(--ink); margin-bottom:6px; }
+
+      .progress-bar { background: var(--panel); border: 1px solid var(--line); height:10px; border-radius:8px; overflow:hidden }
+
+      .progress-fill { height:100%; background:linear-gradient(90deg,var(--primary), #2aa17e); width:0%; transition:width 220ms ease; }
 
       .status-strip {
         margin: 18px 0 14px;
@@ -84,6 +100,14 @@
         margin-top: 20px;
         padding: 18px 18px 8px;
       }
+
+      .dimension-header {
+        display:flex; gap:12px; align-items:center; margin-bottom:12px;
+      }
+
+      .dimension-number { background:var(--primary); color:white; width:40px; height:40px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; font-weight:800 }
+
+      .dimension-meta { color:var(--muted); font-size:0.95rem }
 
       .dimension-title {
         margin: 0 0 6px;
@@ -131,6 +155,13 @@
         padding: 10px 12px;
       }
 
+      .option-item:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(7,24,58,0.05); }
+
+      .option-item input:checked ~ .option-value { background: var(--primary); color: white; }
+      .option-item input:checked ~ .option-text { background: rgba(29,143,112,0.03); }
+
+      .option-item .option-value { color: var(--muted); background: transparent; border-radius:6px; padding:2px 6px }
+
       .option-item input {
         margin-top: 2px;
         accent-color: var(--primary);
@@ -158,7 +189,7 @@
 
       .primary-btn {
         border: none;
-        background: linear-gradient(135deg, var(--primary) 0%, #256eb7 100%);
+        background: linear-gradient(90deg, var(--primary) 0%, #2aa17e 100%);
         color: white;
         font-size: 1rem;
         font-weight: 700;
@@ -193,6 +224,14 @@
         margin-top: 24px;
         padding: 22px 18px;
       }
+
+      /* Results header summary */
+      .results-summary { display:flex; gap:18px; align-items:stretch; margin-bottom:16px; flex-wrap:wrap }
+      .summary-card-large { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; display:flex; gap:12px; align-items:center; min-width:240px }
+      .overall-score { font-size:1.6rem; font-weight:800; color:var(--primary) }
+      .profile-badge { background: rgba(29,143,112,0.09); color:var(--primary); padding:8px 12px; border-radius:10px; font-weight:800 }
+
+      .key-finding { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; min-width:260px }
 
       .results-panel.visible {
         display: block;
@@ -245,6 +284,9 @@
         border-radius: 10px;
       }
 
+      .score-item .mini-bar { height:8px; background:white; border-radius:6px; border:1px solid var(--line); overflow:hidden; width:140px; margin-left:12px }
+      .score-item .mini-fill { height:100%; background:var(--primary); width:0%; }
+
       .score-label {
         color: var(--ink);
       }
@@ -265,6 +307,64 @@
         padding: 14px;
         margin-top: 10px;
       }
+
+      /* Gold Standard comparison */
+      .gold-section {
+        margin-top: 18px;
+        background: var(--panel-alt);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .gold-intro {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .gold-row {
+        display: grid;
+        grid-template-columns: 1fr 90px 90px 90px;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px dashed var(--line);
+      }
+
+      .gold-row:last-child { border-bottom: none; }
+
+      .gold-dimension { font-weight: 700; }
+      .gold-value { text-align: right; color: var(--primary); font-weight: 700; }
+
+      .gold-bar-wrap { grid-column: 1 / -1; margin-top: 6px; }
+      .gold-bar {
+        height: 12px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .gold-fill {
+        height: 100%;
+        background: linear-gradient(90deg, rgba(15,94,168,0.14), rgba(15,94,168,0.28));
+        width: 0%;
+      }
+
+      .gold-marker {
+        position: absolute;
+        top: -4px;
+        width: 2px;
+        height: 20px;
+        background: var(--primary);
+        right: 0;
+        opacity: 0.85;
+      }
+
+      .gold-summary { margin-top: 12px; font-weight: 700; }
+
 
       .profile-box strong {
         display: block;
@@ -292,11 +392,25 @@
   <body>
     <div class="page">
       <header class="topbar">
-        <h1>Insurance AI Operating Maturity Index</h1>
-        <p>
-          A P&amp;C insurance maturity diagnostic focused on operating capability across data, channels,
-          automation, AI, and delivery capacity.
-        </p>
+        <div class="hero-row">
+          <div style="min-width:320px">
+            <h1>Insurance AI Operating Maturity Index</h1>
+            <p>
+              A P&amp;C insurance maturity diagnostic focused on operating capability across data, channels,
+              automation, AI, and delivery capacity.
+            </p>
+            <div class="hero-badges" style="margin-top:12px">
+              <div class="badge">20 Questions</div>
+              <div class="badge">5 Capability Dimensions</div>
+              <div class="badge">1–5 Maturity Scale</div>
+            </div>
+          </div>
+
+          <div class="progress-inline">
+            <div class="progress-text"><span id="completedCount">0</span> of 20 completed</div>
+            <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+          </div>
+        </div>
       </header>
 
       <div class="status-strip">
@@ -314,6 +428,24 @@
 
       <section id="resultsPanel" class="results-panel" aria-live="polite">
         <h2 class="panel-title">Results</h2>
+        <div class="results-summary">
+          <div class="summary-card-large">
+            <div>
+              <div style="color:var(--muted)">Overall maturity score</div>
+              <div class="overall-score">0.00 / 5.00</div>
+            </div>
+            <div style="margin-left:auto; text-align:right">
+              <div style="color:var(--muted)">Matched profile</div>
+              <div class="profile-badge">—</div>
+            </div>
+          </div>
+
+          <div class="key-finding">
+            <div style="font-weight:700">Primary weakness</div>
+            <div id="primaryWeak" style="margin-top:6px">—</div>
+            <div style="color:var(--muted); margin-top:6px">Second: <span id="secondWeak">—</span></div>
+          </div>
+        </div>
         <div class="results-grid">
           <div class="chart-card">
             <h3>Radar Chart</h3>
@@ -343,6 +475,18 @@
           <div class="meta-label">Recommended next action</div>
           <div id="profileAction"></div>
         </div>
+
+        <!-- Gold Standard Comparison -->
+        <section id="goldStandardSection" class="gold-section" aria-live="polite">
+          <h3>Path to AI-Native Operations</h3>
+          <p class="gold-intro">Compare the organization's current maturity against the target-state AI-native operating model defined by this assessment.</p>
+          <p class="gold-intro"><strong>Gold Standard:</strong> A target maturity score of 4.0 or higher across all five dimensions, consistent with the assessment's AI-Native Operator threshold.</p>
+
+          <div id="goldRows"></div>
+
+          <div id="goldLargest" class="gold-summary"></div>
+          <div id="goldNextAction" class="gold-summary"></div>
+        </section>
       </section>
     </div>
 
@@ -641,6 +785,9 @@
         'Operating Change Capacity': 'Assign a standing cross-functional team to one priority change and report its decision-to-deployed cycle time.'
       };
 
+      const GOLD_STANDARD_SCORE = 4.0;
+
+
       function meanOf(arr) {
         return arr.reduce((total, value) => total + value, 0) / arr.length;
       }
@@ -700,16 +847,28 @@
           section.className = 'dimension-section';
           section.setAttribute('data-dimension', dimension);
 
-          const header = document.createElement('h2');
-          header.className = 'dimension-title';
-          header.textContent = dimension;
 
-          const subtitle = document.createElement('p');
-          subtitle.className = 'dimension-subtitle';
-          subtitle.textContent = 'Four questions';
+          const headerWrap = document.createElement('div');
+          headerWrap.className = 'dimension-header';
 
-          section.appendChild(header);
-          section.appendChild(subtitle);
+          const num = document.createElement('div');
+          num.className = 'dimension-number';
+          const idx = DIMENSION_NAMES.indexOf(dimension) + 1;
+          num.textContent = idx.toString().padStart(2,'0');
+
+          const titleWrap = document.createElement('div');
+          const title = document.createElement('h2');
+          title.className = 'dimension-title';
+          title.textContent = dimension;
+          const meta = document.createElement('div');
+          meta.className = 'dimension-meta';
+          meta.textContent = '4 questions';
+
+          titleWrap.appendChild(title);
+          titleWrap.appendChild(meta);
+          headerWrap.appendChild(num);
+          headerWrap.appendChild(titleWrap);
+          section.appendChild(headerWrap);
 
           const dimensionQuestions = QUESTIONS.filter((q) => q.dimension === dimension);
           dimensionQuestions.forEach((question) => {
@@ -727,6 +886,7 @@
             question.options.forEach((option) => {
               const optionWrap = document.createElement('label');
               optionWrap.className = 'option-item';
+              optionWrap.tabIndex = 0;
 
               const input = document.createElement('input');
               input.type = 'radio';
@@ -745,6 +905,16 @@
               optionWrap.appendChild(valueChip);
               optionWrap.appendChild(text);
               list.appendChild(optionWrap);
+
+              // make row clickable: when label is clicked the radio will check by default
+              optionWrap.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  input.checked = true;
+                  updateProgressFromForm();
+                }
+              });
+              input.addEventListener('change', () => updateProgressFromForm());
             });
 
             block.appendChild(label);
@@ -777,10 +947,12 @@
             block.classList.add('invalid');
             block.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
-
           const message = document.getElementById('validationMessage');
-          message.textContent = `Please answer all 20 questions before submitting. Unanswered questions remain: ${unanswered.join(', ')}.`;
+          message.textContent = `Please answer all 20 questions before submitting. Unanswered questions: ${unanswered.join(', ')}.`;
           message.classList.add('visible');
+          message.style.borderColor = 'rgba(168,59,59,0.9)';
+          message.style.background = 'rgba(168,59,59,0.06)';
+          message.style.color = 'var(--danger)';
           return false;
         }
 
@@ -823,6 +995,95 @@
         })[0];
       }
 
+      function renderGoldStandardComparison(scores) {
+        const container = document.getElementById('goldRows');
+        container.innerHTML = '';
+
+        const gaps = {};
+        let allAtGold = true;
+
+        DIMENSION_NAMES.forEach((dimension) => {
+          const current = Number(scores[dimension]);
+          const gap = Math.max(0, GOLD_STANDARD_SCORE - current);
+          gaps[dimension] = gap;
+          if (current < GOLD_STANDARD_SCORE) allAtGold = false;
+
+          const row = document.createElement('div');
+          row.className = 'gold-row';
+
+          const name = document.createElement('div');
+          name.className = 'gold-dimension';
+          name.textContent = dimension;
+
+          const currentEl = document.createElement('div');
+          currentEl.className = 'gold-value';
+          currentEl.textContent = current.toFixed(2);
+
+          const goldEl = document.createElement('div');
+          goldEl.className = 'gold-value';
+          goldEl.textContent = GOLD_STANDARD_SCORE.toFixed(2);
+
+          const gapEl = document.createElement('div');
+          gapEl.className = 'gold-value';
+          gapEl.textContent = gap.toFixed(2);
+
+          row.appendChild(name);
+          row.appendChild(currentEl);
+          row.appendChild(goldEl);
+          row.appendChild(gapEl);
+
+          const barWrap = document.createElement('div');
+          barWrap.className = 'gold-bar-wrap';
+          const bar = document.createElement('div');
+          bar.className = 'gold-bar';
+          const fill = document.createElement('div');
+          fill.className = 'gold-fill';
+          // fill width relative to gold standard (0-100%) where gold standard is 4.0
+          const pct = Math.min(100, (current / GOLD_STANDARD_SCORE) * 100);
+          fill.style.width = pct + '%';
+          const marker = document.createElement('div');
+          marker.className = 'gold-marker';
+          // position gold standard marker relative to 1-5 scale
+          const markerPct = ((GOLD_STANDARD_SCORE - 1) / 4) * 100; // map 1-5 scale to 0-100
+          marker.style.left = `calc(${markerPct}% - 1px)`;
+          bar.appendChild(fill);
+          bar.appendChild(marker);
+          barWrap.appendChild(bar);
+
+          container.appendChild(row);
+          container.appendChild(barWrap);
+        });
+
+        const largestEl = document.getElementById('goldLargest');
+        const nextActionEl = document.getElementById('goldNextAction');
+
+        if (allAtGold) {
+          largestEl.textContent = 'Gold Standard Reached Across All Dimensions';
+          nextActionEl.textContent = 'All five capability dimensions meet or exceed the assessment\'s AI-native target threshold. Continue strengthening feedback loops, monitoring outcomes, and improving capabilities over time.';
+        } else {
+          // find largest gap, tie-break with DIMENSION_PRIORITY
+          let maxGap = -1;
+          let maxDim = null;
+          DIMENSION_NAMES.forEach((dimension) => {
+            const gap = gaps[dimension];
+            if (gap > maxGap) {
+              maxGap = gap;
+              maxDim = dimension;
+            } else if (gap === maxGap && maxGap > 0) {
+              // tie-break by DIMENSION_PRIORITY order
+              const prevIndex = DIMENSION_PRIORITY.indexOf(maxDim);
+              const curIndex = DIMENSION_PRIORITY.indexOf(dimension);
+              if (curIndex < prevIndex) {
+                maxDim = dimension;
+              }
+            }
+          });
+
+          largestEl.textContent = `Largest Capability Gap: ${maxDim} — ${maxGap.toFixed(2)}`;
+          nextActionEl.innerHTML = `<strong>Capability to Build Next:</strong> ${STOCK_ACTIONS[maxDim]}`;
+        }
+      }
+
       function getProfileDetail(profileName, scores, lowestTwo) {
         // If fallback ('Developing Middle') use framework-visible label 'Weakest Link — [dimension]'
         const priorityFallbackDimension = highestPriorityFromLowestTwo(lowestTwo);
@@ -861,6 +1122,10 @@
             pointRadius: 4
           }]
         };
+
+        // Overall average score for display only
+        const overall = meanOf(DIMENSION_NAMES.map(d => scores[d]));
+
 
         const chartCtx = document.getElementById('maturityRadar');
         if (window.maturityChart) {
@@ -908,7 +1173,9 @@
         DIMENSION_NAMES.forEach((dimension) => {
           const li = document.createElement('li');
           li.className = 'score-item';
-          li.innerHTML = `<span class="score-label">${dimension}</span><span class="score-value">${scores[dimension].toFixed(2)}</span>`;
+          const pct = Math.min(100, (scores[dimension]/5)*100);
+          const miniBarWrap = `<div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>`;
+          li.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><span class="score-label">${dimension}</span>${miniBarWrap}</div><span class="score-value">${scores[dimension].toFixed(2)}</span>`;
           scoreList.appendChild(li);
         });
 
@@ -922,6 +1189,19 @@
         document.getElementById('profileName').textContent = profileDetails.displayName || profile.name;
         document.getElementById('profileDiagnosis').textContent = profileDetails.diagnosis;
         document.getElementById('profileAction').textContent = profileDetails.action;
+
+        // Summary card population
+        const overallCard = document.querySelector('.summary-card-large .overall-score');
+        if (overallCard) overallCard.textContent = `${overall.toFixed(2)} / 5.00`;
+        const profileBadge = document.querySelector('.profile-badge');
+        if (profileBadge) profileBadge.textContent = document.getElementById('profileName').textContent;
+        const primaryWeak = document.getElementById('primaryWeak');
+        const secondWeak = document.getElementById('secondWeak');
+        if (primaryWeak) primaryWeak.textContent = lowestTwo[0];
+        if (secondWeak) secondWeak.textContent = lowestTwo[1];
+
+        // Gold Standard comparison (render after profile results)
+        renderGoldStandardComparison(scores);
       }
 
       function onSubmit(event) {
